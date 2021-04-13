@@ -45,6 +45,7 @@ public class TextActivity extends AppCompatActivity {
 
     private void showToolsBar() {
         isShowTools = true;
+        //todo 修改字体
         mTextView.postDelayed(() -> isShowTools = false, 4000);
     }
 }
