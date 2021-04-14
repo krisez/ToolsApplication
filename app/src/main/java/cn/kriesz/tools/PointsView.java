@@ -5,15 +5,18 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * @author Krisez
@@ -26,6 +29,8 @@ public class PointsView extends SurfaceView implements SurfaceHolder.Callback, R
     private int mWidth;
     private int mHeight;
     private final List<Circle> mCircleList = new ArrayList<>();
+    private final List<Circle> mCircleTemps = new ArrayList<>();
+    private boolean isDraw;
 
     public PointsView(Context context) {
         this(context, null);
@@ -38,6 +43,7 @@ public class PointsView extends SurfaceView implements SurfaceHolder.Callback, R
     public PointsView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         mSurfaceHolder = getHolder();
+        mSurfaceHolder.setFixedSize(1080, 1920);
         mSurfaceHolder.addCallback(this);
         //设置可获得焦点
         setFocusable(true);
@@ -78,14 +84,27 @@ public class PointsView extends SurfaceView implements SurfaceHolder.Callback, R
     public void run() {
         while (isRunning) {
             if (canDraw) {
+                long cur = System.currentTimeMillis();
+                isDraw = true;
                 draw();
+                isDraw = false;
+                if (!mCircleTemps.isEmpty()) {
+                    mCircleList.addAll(mCircleTemps);
+                    mCircleTemps.clear();
+                }
+                long draw = System.currentTimeMillis();
+                long m = draw - cur;
+                Log.d("PointsView", "run: " + m);
             }
         }
     }
 
     private void draw() {
         try {
+            long s = System.currentTimeMillis();
             mCanvas = mSurfaceHolder.lockCanvas();
+            long s1 = System.currentTimeMillis();
+            Log.d("PointsView", "draw1: " + (s1 - s));
             if (mCanvas != null) {
                 mCanvas.drawColor(Color.BLACK);
                 for (Circle c : mCircleList) {
@@ -94,12 +113,15 @@ public class PointsView extends SurfaceView implements SurfaceHolder.Callback, R
                     c.update(mWidth, mHeight);
                 }
             }
+            Log.d("PointsView", "draw2: " + (System.currentTimeMillis() - s1));
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
+            long s = System.currentTimeMillis();
             if (isRunning) {
                 mSurfaceHolder.unlockCanvasAndPost(mCanvas);
             }
+            Log.d("PointsView", "draw3: " + (System.currentTimeMillis() - s));
         }
     }
 
@@ -140,10 +162,14 @@ public class PointsView extends SurfaceView implements SurfaceHolder.Callback, R
     public void insert() {
         Random random = new Random();
         String color = randColor();
-        mCircleList.add(new Circle(new Random().nextInt(mWidth), random.nextInt(mHeight), Color.parseColor(color), random.nextInt(20), random.nextInt(90) + 10));
+        if (isDraw) {
+            mCircleTemps.add(new Circle(new Random().nextInt(mWidth), random.nextInt(mHeight), Color.parseColor(color), random.nextInt(20), random.nextInt(90) + 10));
+        } else {
+            mCircleList.add(new Circle(new Random().nextInt(mWidth), random.nextInt(mHeight), Color.parseColor(color), random.nextInt(20), random.nextInt(90) + 10));
+        }
     }
 
-    public boolean hasRun(){
+    public boolean hasRun() {
         return canDraw;
     }
 }

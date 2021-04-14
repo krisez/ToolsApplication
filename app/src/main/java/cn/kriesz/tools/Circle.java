@@ -31,13 +31,13 @@ public class Circle {
      * true is right
      * false is left
      */
-    public boolean xD;
+    public boolean xD = true;
     /**
      * y的移动方向
      * true is down
      * false is top
      */
-    public boolean yD;
+    public boolean yD = true;
 
     public Circle(int x, int y, int color, int speed, int radius) {
         this.x = x;
@@ -45,6 +45,13 @@ public class Circle {
         this.color = color;
         this.speed = speed;
         this.radius = radius;
+        if (speed == 0) {
+            this.speed = 10;
+        }
+        if (radius == 0) {
+            this.radius = 20;
+        }
+        yD = xD = x > y;
     }
 
     public void update(int maxW, int maxH) {
